@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import pathlib
 
 import tensorflow as tf
 
@@ -12,36 +11,24 @@ import cv2
 
 utils_ops.tf = tf.compat.v1
 
-tf.gfile = tf.io.gfile
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
 
+path_to_labels = '/home/arseniy/Downloads/test/TensorFlow/models/research/object_detection/data/mscoco_label_map.pbtxt'
+category_index = label_map_util.create_category_index_from_labelmap(path_to_labels, use_display_name=True)
 
-PATH_TO_LABELS = '/home/arseniy/Downloads/test/TensorFlow/models/research/object_detection/data/mscoco_label_map.pbtxt'
-category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
+path_to_model="/home/arseniy/main/or_wc/efficientdet_d2_coco17_tpu-32/saved_model"
+os.chdir(path_to_model)
+detection_model = tf.saved_model.load(path_to_model).signatures['serving_default']
 
-PATH_TO_TEST_IMAGES_DIR = pathlib.Path('/home/arseniy/Downloads/test/TensorFlow/models/research/object_detection/data/test_images')
-TEST_IMAGE_PATHS = sorted(list(PATH_TO_TEST_IMAGES_DIR.glob("*.jpg")))
-     
-os.chdir("/home/arseniy/main/or_wc/efficientdet_d2_coco17_tpu-32/saved_model/")
-detection_model = tf.saved_model.load("/home/arseniy/main/or_wc/efficientdet_d2_coco17_tpu-32/saved_model")
-     
-
-detection_model.signatures['serving_default'].inputs
-
-detection_model.signatures['serving_default'].output_dtypes
-
-detection_model.signatures['serving_default'].output_shapes
-     
-
-def run_inference_for_single_image(model, image):
-    image = cv2.resize(image, [1280, 1280], interpolation = cv2.INTER_AREA)
-    image = np.asarray(image)
+def run_inference_for_frame(model, image):
 
     input_tensor = tf.convert_to_tensor(image)
 
     input_tensor = input_tensor[tf.newaxis,...]
 
-    model_fn = model.signatures['serving_default']
-    output_dict = model_fn(input_tensor)
+    output_dict = model(input_tensor)
 
     num_detections = int(output_dict.pop('num_detections'))
     output_dict = {key:value[0, :num_detections].numpy() for key,value in output_dict.items()}
@@ -82,11 +69,11 @@ cap = cv2.VideoCapture('rtsp://192.168.0.5:8080/h264_ulaw.sdp')
 t=0
 while(True):
     ret, frame = cap.read()
-    output_dict = run_inference_for_single_image(detection_model, frame)
-    cv2.imshow('image window', cv2.resize(show_inference(frame, output_dict),[1600,720]))
+    output_dict = run_inference_for_frame(detection_model, frame)
+    cv2.imshow('object_detection', cv2.resize(show_inference(frame, output_dict),[1600,720]))
     for i in range(40):
         ret, frame = cap.read()
-        cv2.imshow('image window', cv2.resize(show_inference(frame, output_dict),[1600,720]))
+        cv2.imshow('object_detection', cv2.resize(show_inference(frame, output_dict),[1600,720]))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             t=1
             break
