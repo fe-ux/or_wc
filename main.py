@@ -15,7 +15,7 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
-path_to_labels = '/home/arseniy/Downloads/test/TensorFlow/models/research/object_detection/data/mscoco_label_map.pbtxt'
+path_to_labels = '/home/arseniy/object_detection_api/TensorFlow/models/research/object_detection/data/mscoco_label_map.pbtxt'
 category_index = label_map_util.create_category_index_from_labelmap(path_to_labels, use_display_name=True)
 
 path_to_model="/home/arseniy/main/or_wc/efficientdet_d2_coco17_tpu-32/saved_model"
