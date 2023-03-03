@@ -1,5 +1,4 @@
 import numpy as np
-import os
 import tensorflow as tf
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
@@ -12,11 +11,11 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
-path_to_labels = '/home/arseniy/object_detection_api/TensorFlow/models/research/object_detection/data/mscoco_label_map.pbtxt'
+path_to_labels = 'efficientdet_d2_coco17_tpu-32/saved_model/mscoco_label_map.pbtxt'
 category_index = label_map_util.create_category_index_from_labelmap(path_to_labels, use_display_name=True)
 
-path_to_model = "/home/arseniy/PycharmProjects/or_wc/efficientdet_d2_coco17_tpu-32/saved_model"
-os.chdir(path_to_model)
+path_to_model = "efficientdet_d2_coco17_tpu-32/saved_model"
+
 detection_model = tf.saved_model.load(path_to_model).signatures['serving_default']
 
 
@@ -78,4 +77,3 @@ while True:
     if t:
         cv2.destroyAllWindows()
         break
-
