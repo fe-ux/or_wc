@@ -12,7 +12,7 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
 path_to_labels = 'efficientdet_d2_coco17_tpu-32/saved_model/mscoco_label_map.pbtxt'
-category_index = label_map_util.create_category_index_from_labelmap(path_to_labels, use_display_name=True)
+category_index = label_map_util.create_category_index_from_labelmap(path_to_labels)
 
 path_to_model = "efficientdet_d2_coco17_tpu-32/saved_model"
 
@@ -30,21 +30,8 @@ def run_inference_for_frame(model, image):
     num_detections = int(api_output_dict.pop('num_detections'))
     api_output_dict = {key: value[0, :num_detections].numpy() for key, value in api_output_dict.items()}
     api_output_dict['num_detections'] = num_detections
-
     api_output_dict['detection_classes'] = api_output_dict['detection_classes'].astype(np.int64)
 
-    if 'detection_masks' in api_output_dict:
-        detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(
-            api_output_dict['detection_masks'],
-            api_output_dict['detection_boxes'],
-            image.shape[0],
-            image.shape[1]
-        )
-        detection_masks_reframed = tf.cast(
-            detection_masks_reframed > 0.5,
-            tf.uint8
-        )
-        api_output_dict['detection_masks_reframed'] = detection_masks_reframed.numpy()
     return api_output_dict
 
 
@@ -55,7 +42,6 @@ def show_inference(image_np, api_output_dict):
         api_output_dict['detection_classes'],
         api_output_dict['detection_scores'],
         category_index,
-        instance_masks=api_output_dict.get('detection_masks_reframed', None),
         use_normalized_coordinates=True,
         line_thickness=8
     )
